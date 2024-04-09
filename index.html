@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>flappy</title>
+</head>
+<body>
+    <canvas id="Canvas"></canvas>
+    <div id="manager" >
+        <div id="title">TAPPY BIRD</div>
+        <button id="start" onclick="manage()"><b>START</b></button>
+    </div>
+    <div id="gameOver" onclick="window.location.reload()">GAME OVER</div>
+    <div id="block">Use a different device or try changing orientation</div>
+    
+</body>
+<style>
+    #manager{
+        position:absolute;
+        align-items:center;
+        justify-content: center;
+        height:50vh;
+        width:80vw;
+        top:50%;
+        left:50%;
+        transform: translateX(-50%) translateY(-50%);
+        background: #caec40;
+        border-radius:10px;
+    }
+
+    #title{
+        position:relative;
+        top:25%;
+        font-size:3em;
+        letter-spacing: 5px;
+        text-align: center;
+        color:#ff0015;
+        text-shadow: rgba(177, 215, 7, 0.697) 5px 5px;
+        animation-name:anim1;
+        animation-duration:3s;
+        animation-iteration-count:infinite;
+       
+    }
+    #gameOver{
+        position:absolute;
+        width:100vw;
+        font-size:3em;
+        letter-spacing: 5px;
+        text-align: center;
+        color:#ff153f;
+        transform: scale(0) translateX(-50%) translateY(-50%);
+        top: 50%;
+        left: 50%;
+        background:yellow;
+        border: solid gray 5px;
+        border-radius:10px;
+    }
+    #start{
+        position: relative;
+        text-align: center;
+        top:30%;
+        left:40%;
+        transform: translateX(-50%) translateY(-50%);
+        width:120px;
+        height: 30px;
+        background: transparent;
+        border: none;
+        font-size: 2em;
+        color: rgb(13, 143, 1);
+        letter-spacing: 20px;
+        animation-name:anim;
+        animation-duration:2s;
+        animation-iteration-count:infinite;
+    }
+    #Canvas{
+        position:absolute;
+        top:0px;
+        left:0px;
+        width:100%;
+        height:100%;
+        border: solid 5px black #a21101;
+        transform: scale(1);
+        background: url("https://wallpapercave.com/wp/wp6956942.png");
+        background-position: center;
+        background-size: cover;
+    }
+    
+    @keyframes anim{
+        0%,100%{
+            color:rgb(13,143,1);
+        }
+        
+        20%{
+            color: aquamarine;
+        }
+        40%{
+            color: blue;
+        }
+    }
+    
+    @keyframes anim1{
+        0%,100%{
+            background:transparent;
+        }
+        
+        20%{
+            color:transparent;
+            background:green;
+        }
+    }
+    
+    #block{
+        position:absolute;
+        top:0;
+        left:0;
+        height:100vh;
+        width:100vw;
+        background: red;
+        scale:0;
+        font-size:3em;
+    }
+
+    
+</style>
+<script>
+    let block=document.getElementById("block");
+    let manager=document.getElementById('manager');
+    let gameOver=document.getElementById('gameOver');
+    let canvas=document.getElementById("Canvas");
+    navigator.wakeLock.request('screen');
+    let ctx=canvas.getContext('2d');
+    class Obstacle{
+        constructor(x,h){
+            this.x=x;
+            this.y=0;
+            this.width=30;
+            this.height=h;
+            this.sy=this.height+40;
+            this.sheight=150;
+            
+        }
+        
+        
+        draw(ctx){
+            ctx.fillStyle="#014104";
+            ctx.fillRect(this.x,this.y,this.width,this.height-10);
+            ctx.fillRect(this.x,this.sy+10,this.width,this.sheight-10);
+            ctx.fillStyle="#026307";
+            ctx.fillRect(this.x-5,this.height-10,this.width+10,10);
+            ctx.fillRect(this.x-5,this.sy,this.width+10,10);
+            ctx.fillStyle='black';
+            ctx.strokeRect(this.x-5,this.height-10,this.width+10,10);
+            ctx.strokeRect(this.x,this.y,this.width,this.height-10);
+            ctx.strokeRect(this.x-5,this.sy,this.width+10,10);
+            ctx.strokeRect(this.x,this.sy+10,this.width,this.sheight-10);
+        }
+        collision(obj){
+            if(this.x<=obj.x+obj.width && this.x+this.width>=obj.x && !(this.sy>obj.y+obj.height && this.height<obj.y))
+                return true;
+            return false;
+        }
+        update(){
+            this.x-=3;
+        }
+    }
+    class Bird{
+        constructor() {
+            this.x=36;
+            this.y=50;
+            this.width=20;
+            this.height=10;
+            this.upval=10;
+            this.speed=5;
+        }
+        draw(ctx){
+            ctx.fillStyle='yellow';
+            ctx.fillRect(this.x,this.y,this.width,this.height);
+            ctx.fillStyle='#a54d52';
+            ctx.fillRect(this.x+this.width-1,this.y+this.height-5,7,2);
+            ctx.fillRect(this.x+this.width-1,this.y+this.height-3,4,1);
+            ctx.fillStyle='#a21101';
+            ctx.fillRect(this.x+this.width/2,this.y-3,3,3);
+            ctx.fillRect(this.x+this.width/2-3.5,this.y-3,3,3);
+            ctx.fillStyle='orange';
+            ctx.fillRect(this.x+3,this.y+3,8,6);
+            ctx.fillStyle="aquamarine";
+            ctx.fillRect(this.x+this.width-3,this.y+1,4,3);
+            ctx.fillStyle="black";
+            ctx.fillRect(this.x+this.width-2,this.y+2,1.5,2.3);
+            ctx.lineWidth=0.3;
+            ctx.strokeRect(this.x,this.y,this.width,this.height);
+            ctx.strokeRect(this.x+this.width-1,this.y+this.height-5,5,2);
+            ctx.strokeRect(this.x+this.width-1,this.y+this.height-3,4,1);
+            ctx.strokeRect(this.x+this.width/2,this.y-3,3,3);
+            ctx.strokeRect(this.x+this.width/2-3.5,this.y-3,3,3);
+            ctx.strokeRect(this.x+3,this.y+3,8,6);
+            ctx.strokeRect(this.x+this.width-3,this.y+1,4,3);
+            
+        }
+        update(deltatime){
+            if(!deltaTime)
+            return;
+        this.y=this.y+this.speed/deltatime;
+    }
+    
+    fly(){
+            this.y-=this.upval;
+            if(this.y<10)
+                this.y=10;
+        }
+    }
+    let score=0;
+    function upScore(s){
+        ctx.fillStyle="yellow";
+        ctx.fillText(s,150,10,300);
+    }
+    let obs, st, i,height,bird,currTime,deltaTime,prevTime,curr,prev;
+    let abs=[];
+    function start(){
+        score=0;
+        obs=[new Obstacle(200,40)];
+        st=400;
+        i;
+        for(i=1;i<=5;i++){
+            let height=obs[i-1].height;
+            height+=30+Math.random()*-30;
+            if (height<30)
+                height=30;
+            if(height>90)
+                height=90;
+            obs.push(new Obstacle(st,height));
+            st+=200
+        }
+            
+        bird=new Bird();
+        currTime,deltaTime;
+        prevTime=0;
+        curr=0;
+        prev=0;
+    window.addEventListener("devicemotion",(e)=>{
+        let t=Math.abs(e.acceleration.z);
+        let axel=Math.abs(e.rotationRate.alpha+e.rotationRate.beta+e.rotationRate.gamma)/3; 
+        if (t>0.4 && t<10 && axel<5.5){
+            curr= Date.now();
+            if(curr-prev>250){
+                bird.fly();
+                prev=curr;
+            }
+        }
+        
+    });
+    }
+    let state;
+    function gameloop(timestamp){
+        ctx.clearRect(0,0,1000,1000);
+        currTime=timestamp;
+        deltaTime=currTime-prevTime;
+        state=false;
+        bird.draw(ctx);
+        bird.update(deltaTime);
+        obs.forEach(ob=>{
+            ob.draw(ctx);
+            state=state||ob.collision(bird);
+            ob.update(deltaTime);
+        });
+        upScore(score);
+        if(obs[0].x<-40){
+            score++;
+            obs.splice(0,1);
+            height=obs[4].height;
+            height+=-30+Math.random()*60;
+              if (height<30)
+               height=30;
+            else if(height>90)
+               height=90;
+            obs.push(new Obstacle(obs[4].x+200,height));
+        }
+        prevTime=currTime;
+        if(state){
+            gameOver.style.transform="translateX(-50%) translateY(-50%) scale(1)"
+            gameOver.innerText="Game Over\nYour Score: "+score;
+            return true;
+        }
+        requestAnimationFrame(gameloop); 
+    }
+    function manage(){
+        gameOver.style.transform="scale(0)";
+        manager.style.transform="translateX(-50%) translateY(-50%) scale(0)"
+        start();
+        gameloop();
+    }
+    if(window.orientation!=0)
+        block.style.scale=1;
+</script>
+</html>
